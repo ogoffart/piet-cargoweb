@@ -1,0 +1,9 @@
+[package]
+name = "piet-cargoweb"
+version = "0.1.0"
+authors = ["Olivier Goffart <ogoffart@woboq.com>"]
+edition = "2018"
+
+[dependencies]
+piet = "0.0.6"
+stdweb = "0.4.20"
