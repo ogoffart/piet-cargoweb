@@ -5,23 +5,25 @@ use std::ops::Deref;
 
 use piet::kurbo::{Affine, PathEl, Point, Rect, Shape};
 
-use stdweb::web::{CanvasRenderingContext2d, CanvasGradient};
 use stdweb::js;
+use stdweb::web::{CanvasGradient, CanvasRenderingContext2d};
 
 pub use piet::*;
 
 pub struct WebRenderContext<'a> {
     ctx: &'a mut CanvasRenderingContext2d,
     /// Used for creating image bitmaps and possibly other resources.
-//     window: &'a Window,
+    //     window: &'a Window,
     err: Result<(), Error>,
 }
 
 impl<'a> WebRenderContext<'a> {
-    pub fn new(ctx: &'a mut CanvasRenderingContext2d/*, window: &'a Window*/) -> WebRenderContext<'a> {
+    pub fn new(
+        ctx: &'a mut CanvasRenderingContext2d, /*, window: &'a Window*/
+    ) -> WebRenderContext<'a> {
         WebRenderContext {
             ctx,
-//             window,
+            //             window,
             err: Ok(()),
         }
     }
@@ -57,10 +59,10 @@ pub struct WebTextLayoutBuilder {
 
 pub struct WebImage {
     inner: stdweb::Value,
-//     inner: Vec<u8>,
+    //     inner: Vec<u8>,
     width: u32,
     height: u32,
-//     format: ImageFormat,
+    //     format: ImageFormat,
 }
 
 /// https://developer.mozilla.org/en-US/docs/Web/CSS/font-style
@@ -76,7 +78,7 @@ trait WrapError<T> {
     fn wrap(self) -> Result<T, Error>;
 }
 
-impl<T, E : std::error::Error + 'static> WrapError<T> for Result<T, E> {
+impl<T, E: std::error::Error + 'static> WrapError<T> for Result<T, E> {
     fn wrap(self) -> Result<T, Error> {
         self.map_err(|e| {
             let e: Box<dyn std::error::Error> = Box::new(e);
@@ -140,7 +142,8 @@ impl<'a> RenderContext for WebRenderContext<'a> {
                 let r = radial.radius;
                 let mut rg = self
                     .ctx
-                    .create_radial_gradient(xc + xo, yc + yo, 0.0, xc, yc, r).wrap()?;
+                    .create_radial_gradient(xc + xo, yc + yo, 0.0, xc, yc, r)
+                    .wrap()?;
                 set_gradient_stops(&mut rg, &radial.stops);
                 Ok(Brush::Gradient(rg))
             }
@@ -232,7 +235,6 @@ impl<'a> RenderContext for WebRenderContext<'a> {
         buf: &[u8],
         format: ImageFormat,
     ) -> Result<Self::Image, Error> {
-
         /*let buf = match format {
             // Discussion topic: if buf were mut here, we could probably avoid this clone.
             // See https://github.com/rustwasm/wasm-bindgen/issues/1005 for an issue that might
@@ -270,7 +272,7 @@ impl<'a> RenderContext for WebRenderContext<'a> {
             _ => Vec::new(),
         };*/
 
-        let image_data = js!{
+        let image_data = js! {
             var data = new ImageData(new Uint8ClampedArray(@{buf}), @{width as u32}, @{height as u32});
             var canvas = document.createElement("canvas");
             canvas.width = @{width as u32};
@@ -294,7 +296,7 @@ impl<'a> RenderContext for WebRenderContext<'a> {
     ) {
         self.with_save(|rc| {
             let rect = rect.into();
-            js!{
+            js! {
                 var ctx = @{rc.ctx.clone()};
                 var inner = @{image.inner.clone()};
                 ctx.drawImage(inner,
@@ -304,7 +306,8 @@ impl<'a> RenderContext for WebRenderContext<'a> {
                     @{rect.height()});
             };
             Ok(())
-        }).unwrap();
+        })
+        .unwrap();
     }
 }
 
@@ -488,10 +491,7 @@ impl TextLayoutBuilder for WebTextLayoutBuilder {
 
     fn build(self) -> Result<Self::Out, Error> {
         self.ctx.set_font(&self.font.get_font_string());
-        let width = self
-            .ctx
-            .measure_text(&self.text).wrap()?
-            .get_width();
+        let width = self.ctx.measure_text(&self.text).wrap()?.get_width();
         Ok(WebTextLayout {
             font: self.font,
             text: self.text,
@@ -513,7 +513,6 @@ impl TextLayout for WebTextLayout {
         unimplemented!()
     }
 }
-
 
 pub type Piet<'a> = WebRenderContext<'a>;
 pub type PietText<'a> = WebRenderContext<'a>;
